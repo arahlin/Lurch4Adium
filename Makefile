@@ -1,4 +1,3 @@
-ADIUM_VERSION=adium-1.5.10.4
 BUILDCONFIGURATION=Release
 
 CWD=$(shell pwd)
@@ -22,9 +21,6 @@ LIBGCRYPT_LDFLAGS=$(wildcard $(LIBGCRYPT_FRAMEWORK_PATH)/lib*) \
 MXML_PATH=$(CWD)/vendor/mxml
 MXML_CFLAGS=$(addprefix -I,$(wildcard $(MXML_PATH)))
 MXML_LDLAGS=$(addprefix -L,$(wildcard $(MXML_PATH)))
-
-HG=hg
-HGRC=~/.hgrc
 
 XCODEBUILD?=xcodebuild
 
@@ -58,26 +54,15 @@ vendor/.updated:
 	git submodule update --init --recursive
 	touch $@
 
-fix-hg-conf:
-	grep -q hg.adium.im:minimumprotocol $(HGRC) 2>/dev/null \
-		|| (echo '[hostsecurity]'; echo 'hg.adium.im:minimumprotocol=tls1.0') >> $(HGRC)
-
 Frameworks/:
 	mkdir -p $@
 
 $(ADIUM_FRAMEWORK_PATH)/build/Release-Debug/AIUtilities.framework/AIUtilities: $(ADIUM_FRAMEWORK_PATH)/.built
 $(ADIUM_FRAMEWORK_PATH)/build/Release-Debug/Adium.framework/AIUtilities: $(ADIUM_FRAMEWORK_PATH)/.built
 $(ADIUM_FRAMEWORK_PATH)/build/Release-Debug/AdiumLibpurple.framework/AIUtilities: $(ADIUM_FRAMEWORK_PATH)/.built
-$(ADIUM_FRAMEWORK_PATH)/.built: $(ADIUM_FRAMEWORK_PATH)/.checkout
+$(ADIUM_FRAMEWORK_PATH)/.built:
 	$(MAKE) -C $(ADIUM_FRAMEWORK_PATH) adium
 	touch $(ADIUM_FRAMEWORK_PATH)/.built
-
-$(ADIUM_FRAMEWORK_PATH)/Frameworks/libpurple.framework/libpurple: $(ADIUM_FRAMEWORK_PATH)/.checkout
-$(ADIUM_FRAMEWORK_PATH)/.checkout:
-	$(MAKE) Frameworks fix-hg-conf # Don't want to rebuild on those targets
-	$(HG) clone https://hg.adium.im/adium $(ADIUM_FRAMEWORK_PATH)
-	cd $(ADIUM_FRAMEWORK_PATH); $(HG) checkout $(ADIUM_VERSION)
-	touch $(ADIUM_FRAMEWORK_PATH)/.checkout
 
 vendor/carbons/build/carbons.a: vendor/carbons/Makefile $(ADIUM_FRAMEWORK_PATH)/Frameworks/libpurple.framework/libpurple
 	$(MAKE) -C vendor/carbons \
@@ -127,7 +112,7 @@ real-clean: clean
 	rm -rf vendor/*/* vendor/*/.*
 
 .PHONY: all prepare prepare-vendor build clean real-clean \
-	fix-hg-conf build-adium clean-adium \
+	build-adium clean-adium \
 	build-carbons clean-carbons \
 	build-l4a clean-l4a \
 	build-lurch clean-lurch \
